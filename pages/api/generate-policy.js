@@ -19,17 +19,26 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-3.5-turbo',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
       }),
     });
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || 'Error generating policy';
 
+    // DEBUG: Show the full OpenAI response
+    console.log('OpenAI response:', JSON.stringify(data, null, 2));
+
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      return res.status(500).json({ error: 'Invalid response from OpenAI', data });
+    }
+
+    const content = data.choices[0].message.content;
     res.status(200).json({ policy: content });
+
   } catch (error) {
+    console.error('Server Error:', error);
     res.status(500).json({ error: 'Failed to generate policy' });
   }
 }
